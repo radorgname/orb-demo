@@ -1,5 +1,5 @@
 version: 2.1
-# description: # The purpose of this orb
+description: # The purpose of this orb
 
 orbs:
   node:
@@ -12,7 +12,7 @@ orbs:
         steps:
           - run: echo "We will now do special things"
     jobs:
-      install:
+      verify:
         executor: node
         steps:
           - run:
@@ -22,20 +22,11 @@ orbs:
               name: node version
               command: node --version
 
-jobs:
-  aws-cli-example:
-    executor: cimg/python:3.7-node
-    steps:
-      - checkout
-      - aws-cli/install
-      - run:
-          name: version
-          command: aws --version
-orbs:
-  aws-cli: circleci/aws-cli@1.0.0
-
-
 workflows:
-  aws-cli:
+  main:
     jobs:
-      - aws-cli-example
+      - checkout
+      - node/init
+      - node/build
+      - node/test
+      - node/deploy
