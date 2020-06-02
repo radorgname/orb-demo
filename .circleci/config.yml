@@ -4,22 +4,21 @@ description: # The purpose of this orb
 orbs:
   node:
     executors:
-      specialthingsexecutor:
+      node:
         docker:
           - image: cimg/python:3.7-node
     commands:
-      dospecialthings:
+      install:
         steps:
           - run: echo "We will now do special things"
     jobs:
       myjob:
-        executor: specialthingsexecutor
+        executor: node
         steps:
-          - dospecialthings
-          - codecov/upload:
-              path: ~/tmp/results.xml
+          - npm --version
+          - node --version
 
 workflows:
   main:
     jobs:
-      - aws-lambda/node
+      - my-orb/myjob
