@@ -93,7 +93,10 @@ jobs:
 workflows:
   main:
     jobs:
-      - node/install
+      - node/checkout
+      - node/install:
+          requires:
+            - node/checkout
       - node/verify-versions:
           requires:
             - node/install
