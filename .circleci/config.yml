@@ -12,7 +12,7 @@ orbs:
         steps:
           - run: echo "We will now do special things"
     jobs:
-      myjob:
+      install:
         executor: node
         steps:
           - npm --version
@@ -21,4 +21,4 @@ orbs:
 workflows:
   main:
     jobs:
-      - my-orb/myjob
+      - node/install
