@@ -27,13 +27,13 @@ jobs:
     executor: aws-cli/default
     steps:
       - checkout
-      - aws-cli/install:
+      - aws-cli/install
       - run:
           name: version
           command: aws --version
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
-version: 2.1
+
 workflows:
   aws-cli:
     jobs:
