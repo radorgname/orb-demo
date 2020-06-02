@@ -1,0 +1,25 @@
+version: 2.1
+description: # The purpose of this orb
+
+orbs:
+  node:
+    executors:
+      specialthingsexecutor:
+        docker:
+          - image: cimg/python:3.7-node
+    commands:
+      dospecialthings:
+        steps:
+          - run: echo "We will now do special things"
+    jobs:
+      myjob:
+        executor: specialthingsexecutor
+        steps:
+          - dospecialthings
+          - codecov/upload:
+              path: ~/tmp/results.xml
+
+workflows:
+  main:
+    jobs:
+      - my-orb/myjob
