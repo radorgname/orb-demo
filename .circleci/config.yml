@@ -15,8 +15,12 @@ orbs:
       install:
         executor: node
         steps:
-          - npm --version
-          - node --version
+          - run:
+              name: npm version
+              command: npm --version
+          - run:
+              name: node version
+              command: node --version
 
 workflows:
   main:
