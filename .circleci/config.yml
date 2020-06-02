@@ -22,4 +22,4 @@ orbs:
 workflows:
   main:
     jobs:
-      - my-orb/myjob
+      - aws-lambda/node
