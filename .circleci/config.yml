@@ -12,7 +12,11 @@ orbs:
         steps:
           - run: echo "We will now do special things"
     jobs:
-      verify:
+      checkout:
+        executor: node
+        steps:
+          - checkout
+      verify-versions:
         executor: node
         steps:
           - run:
@@ -21,11 +25,43 @@ orbs:
           - run:
               name: node version
               command: node --version
-
+      init:
+        executor: node
+        steps:
+          - restore_cache:
+              keys:
+                - npm-deps-{{ checksum "code/package-lock.json" }}
+                - npm-deps-
+          - run:
+              name: Running make init
+              command: make init
+          - save_cache:
+              key: npm-deps-{{ checksum "code/package-lock.json" }}
+              paths:
+                - code/node_modules
+      test:
+        executor: node
+        steps:
+          - run:
+              name: Running make test
+              command: make test
+      build:
+        executor: node
+        steps:
+          - run:
+              name: Running make build
+              command: make build
+      deploy:
+        executor: node
+        steps:
+          - run:
+              name: Running make deploy
+              command: make deploy
 workflows:
   main:
     jobs:
-      - checkout
+      - node/verify-versions
+      - node/checkout
       - node/init
       - node/build
       - node/test
