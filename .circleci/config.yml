@@ -7,15 +7,36 @@ orbs:
       node:
         docker:
           - image: cimg/python:3.7-node
-    commands:
-      install:
-        steps:
-          - run: echo "We will now do special things"
+    # commands:
+    #   install:
+    #     steps:
+    #       - run:
+    #           name: Install NVM
+    #           command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
+    #       - run:
+    #           name: activate profile
+    #           command: |
+    #             echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
+    #             echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
+
     jobs:
+      install:
+        executor: node
+        steps:
+          - run:
+              name: Install NVM
+              command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
+          - run:
+              name: activate profile
+              command: |
+                echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
+                echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
+
       checkout:
         executor: node
         steps:
           - checkout
+
       verify-versions:
         executor: node
         steps:
@@ -63,20 +84,26 @@ orbs:
           - run:
               name: Running make deploy
               command: make deploy
+
+jobs:
+
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - node/checkout
-      - node/init:
+      - node/install
+      - node/verify-versions:
           requires:
-            - node/checkout
-      - node/build:
-          requires:
-            - node/init
-      - node/test:
-          requires:
-            - node/build
-      - node/deploy:
-          requires:
-            - node/test
+            - node/install
+      # - node/checkout
+      # - node/init:
+      #     requires:
+      #       - node/checkout
+      # - node/build:
+      #     requires:
+      #       - node/init
+      # - node/test:
+      #     requires:
+      #       - node/build
+      # - node/deploy:
+      #     requires:
+      #       - node/test
