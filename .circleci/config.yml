@@ -25,4 +25,4 @@ orbs:
 workflows:
   main:
     jobs:
-      - node/install
+      - node
