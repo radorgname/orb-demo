@@ -73,7 +73,7 @@ orbs:
 
 jobs:
   checkout:
-    executor: node/default
+    executor: node/aws-cli
     steps:
       - checkout
 
