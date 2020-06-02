@@ -23,6 +23,7 @@ orbs:
       install:
         executor: node
         steps:
+          - checkout
           - run:
               name: Install NVM
               command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
@@ -93,10 +94,7 @@ jobs:
 workflows:
   main:
     jobs:
-      - node/checkout
-      - node/install:
-          requires:
-            - node/checkout
+      - node/install
       - node/verify-versions:
           requires:
             - node/install
