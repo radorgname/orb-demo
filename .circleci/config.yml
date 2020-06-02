@@ -1,30 +1,30 @@
 version: 2.1
 # description: # The purpose of this orb
 
-# orbs:
-#   node:
-#     executors:
-#       node:
-#         docker:
-#           - image: cimg/python:3.7-node
-#     commands:
-#       install:
-#         steps:
-#           - run: echo "We will now do special things"
-#     jobs:
-#       install:
-#         executor: node
-#         steps:
-#           - run:
-#               name: npm version
-#               command: npm --version
-#           - run:
-#               name: node version
-#               command: node --version
+orbs:
+  node:
+    executors:
+      node:
+        docker:
+          - image: cimg/python:3.7-node
+    commands:
+      install:
+        steps:
+          - run: echo "We will now do special things"
+    jobs:
+      install:
+        executor: node
+        steps:
+          - run:
+              name: npm version
+              command: npm --version
+          - run:
+              name: node version
+              command: node --version
 
 jobs:
   aws-cli-example:
-    executor: aws-cli/default
+    executor: cimg/python:3.7-node
     steps:
       - checkout
       - aws-cli/install
@@ -33,6 +33,7 @@ jobs:
           command: aws --version
 orbs:
   aws-cli: circleci/aws-cli@1.0.0
+
 
 workflows:
   aws-cli:
