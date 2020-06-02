@@ -45,6 +45,12 @@ orbs:
           - run:
               name: Running make test
               command: make test
+      lint:
+        executor: node
+        steps:
+          - run:
+              name: Running make lint
+              command: make lint
       build:
         executor: node
         steps:
@@ -62,7 +68,15 @@ workflows:
     jobs:
       - node/verify-versions
       - node/checkout
-      - node/init
-      - node/build
-      - node/test
-      - node/deploy
+      - node/init:
+          requires:
+            - node/checkout
+      - node/build:
+          requires:
+            - node/init
+      - node/test:
+          requires:
+            - node/build
+      - node/deploy:
+          requires:
+            - node/test
