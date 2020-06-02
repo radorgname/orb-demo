@@ -7,7 +7,6 @@ orbs:
       node:
         docker:
           - image: cimg/node:10
-    executors:
       aws-cli:
         docker:
           - image: amazon/aws-cli
