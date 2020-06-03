@@ -4,93 +4,98 @@ description: # The purpose of this orb
 orbs:
   node:
     executors:
-      node:
+      default:
         docker:
-          - image: cimg/node:10
+          - image: cimg/node:10.20
       aws-cli:
         docker:
           - image: amazon/aws-cli
-    # commands:
-    #   install:
-    #     steps:
-    #       - run:
-    #           name: Install NVM
-    #           command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
-    #       - run:
-    #           name: activate profile
-    #           command: |
-    #             echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
-    #             echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
-
-    jobs:
-      verify-versions:
-        executor: node
-        steps:
-          - run:
-              name: npm version
-              command: npm --version
-          - run:
-              name: node version
-              command: node --version
+    commands:
       init:
-        executor: node
+        description: "make init command"
+        parameters:
+          init_command:
+            type: string
+            default: make init
+          cache_key:
+            type: string
+            default: "code/package-lock.json"
+          node_modules_path:
+            type: string
+            default: "code/node_modules"
         steps:
+          - checkout
           - restore_cache:
               keys:
-                - npm-deps-{{ checksum "code/package-lock.json" }}
+                - npm-deps-{{ checksum "<< parameters.cache_key >>" }}
                 - npm-deps-
-          - run:
-              name: Running make init
-              command: make init
+          - run: "<< parameters.init_command >>"
           - save_cache:
-              key: npm-deps-{{ checksum "code/package-lock.json" }}
+              key: npm-deps-{{ checksum "<< parameters.cache_key >>" }}
               paths:
-                - code/node_modules
-      test:
-        executor: node
-        steps:
-          - run:
-              name: Running make test
-              command: make test
-      lint:
-        executor: node
-        steps:
-          - run:
-              name: Running make lint
-              command: make lint
+                - << parameters.node_modules_path >>
       build:
-        executor: node
+        description: "make build command"
+        parameters:
+          build_command:
+            type: string
+            default: make build
         steps:
-          - run:
-              name: Running make build
-              command: make build
+          - attach_workspace:
+              at: .
+          - run: "<< parameters.build_command >>"
       deploy:
-        executor: node
+        description: "make deploy command"
+        parameters:
+          deploy_command:
+            type: string
+            default: make deploy
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
+          - attach_workspace:
+              at: .
+          - run: "<< parameters.deploy_command >>"
 
 jobs:
-  checkout:
-    executor: node/aws-cli
+  init:
+    executor: node/default
     steps:
-      - checkout
+      - node/init
+  build:
+    executor: node/default
+    steps:
+      - node/build
+  deploy-development:
+    executor: node/default
+    steps:
+      - node/deploy
+  deploy-test:
+    executor: node/default
+    steps:
+      - node/deploy
+  deploy-production:
+    executor: node/default
+    steps:
+      - node/deploy
+  # deploy-test:
+  #   executor: node/default
+  #   steps:
+  # deploy-prod:
+  #   executor: node/default
+  #   steps:
 
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - checkout
-      - node/init:
+      - init
+      - build:
           requires:
-            - checkout
-      - node/build:
+            - init
+      - deploy-development:
           requires:
-            - node/init
-      - node/test:
+            - build
+      - deploy-test:
           requires:
-            - node/build
-      - node/deploy:
+            - deploy-development
+      - deploy-production:
           requires:
-            - node/test
+            - deploy-test
