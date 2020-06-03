@@ -6,7 +6,7 @@ orbs:
     executors:
       node:
         docker:
-          - image: cimg/node:10
+          - image: cimg/node:10.20
       aws-cli:
         docker:
           - image: amazon/aws-cli
@@ -35,17 +35,13 @@ orbs:
       init:
         executor: node
         steps:
-          - restore_cache:
-              keys:
-                - npm-deps-{{ checksum "code/package-lock.json" }}
-                - npm-deps-
           - run:
               name: Running make init
               command: make init
-          - save_cache:
-              key: npm-deps-{{ checksum "code/package-lock.json" }}
+          - persist_to_workspace:
+              root: .
               paths:
-                - code/node_modules
+                - .
       test:
         executor: node
         steps:
@@ -61,6 +57,8 @@ orbs:
       build:
         executor: node
         steps:
+          - attach_workspace:
+              at: .
           - run:
               name: Running make build
               command: make build
@@ -71,26 +69,67 @@ orbs:
               name: Running make deploy
               command: make deploy
 
+executors:
+  python_with_node_image:
+    docker:
+      - image: circleci/python:3.6.6-stretch-node
+
 jobs:
-  checkout:
-    executor: node/aws-cli
+  development:
+    executors: python_with_node_image
     steps:
       - checkout
-
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
+  test:
+    executors: python_with_node_image
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
+  production:
+    executors: python_with_node_image
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - checkout
-      - node/init:
+      - development
+      - test:
           requires:
-            - checkout
-      - node/build:
+            - developm  ent
+      - production:
           requires:
-            - node/init
-      - node/test:
-          requires:
-            - node/build
-      - node/deploy:
-          requires:
-            - node/test
+            - production
