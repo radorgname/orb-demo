@@ -79,7 +79,7 @@ jobs:
   deploy-production:
     executor: node/default
     steps:
-      - node/deploy
+      - node/deploy:
           deploy_command: make deploy-prod
   # deploy-test:
   #   executor: node/default
