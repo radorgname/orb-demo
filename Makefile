@@ -7,3 +7,6 @@ test:
 	@echo "make test was called"
 deploy:
 	@echo "make deploy was caled"
+
+deploy-prod:
+	@echo "make deploy was caled"

@@ -64,7 +64,6 @@ jobs:
     executor: node/default
     steps:
       - node/init
-
   build:
     executor: node/default
     steps:
@@ -81,6 +80,7 @@ jobs:
     executor: node/default
     steps:
       - node/deploy
+          deploy_command: make deploy-prod
   # deploy-test:
   #   executor: node/default
   #   steps:
