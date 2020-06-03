@@ -6,7 +6,7 @@ orbs:
     executors:
       default:
         docker:
-          - image: cimg/node:10
+          - image: cimg/node:10.20
       aws-cli:
         docker:
           - image: amazon/aws-cli
