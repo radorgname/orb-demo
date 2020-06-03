@@ -4,93 +4,104 @@ description: # The purpose of this orb
 orbs:
   node:
     executors:
-      node:
+      default:
         docker:
           - image: cimg/node:10
       aws-cli:
         docker:
           - image: amazon/aws-cli
-    # commands:
-    #   install:
-    #     steps:
-    #       - run:
-    #           name: Install NVM
-    #           command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
-    #       - run:
-    #           name: activate profile
-    #           command: |
-    #             echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
-    #             echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
-
-    jobs:
-      verify-versions:
-        executor: node
-        steps:
-          - run:
-              name: npm version
-              command: npm --version
-          - run:
-              name: node version
-              command: node --version
+    commands:
       init:
-        executor: node
+        description: "make init command"
+        parameters:
+          init_command:
+            type: string
+            default: make init
         steps:
-          - restore_cache:
-              keys:
-                - npm-deps-{{ checksum "code/package-lock.json" }}
-                - npm-deps-
-          - run:
-              name: Running make init
-              command: make init
-          - save_cache:
-              key: npm-deps-{{ checksum "code/package-lock.json" }}
-              paths:
-                - code/node_modules
+          - run: "<< parameters.init_command >>"
       test:
-        executor: node
+        description: "make test command"
+        parameters:
+          test_command:
+            type: string
+            default: make test
         steps:
-          - run:
-              name: Running make test
-              command: make test
-      lint:
-        executor: node
-        steps:
-          - run:
-              name: Running make lint
-              command: make lint
+          - run: "<< parameters.test_command >>"
       build:
-        executor: node
+        description: "make build command"
+        parameters:
+          build_command:
+            type: string
+            default: make build
         steps:
-          - run:
-              name: Running make build
-              command: make build
+          - run: "<< parameters.build_command >>"
       deploy:
-        executor: node
+        description: "make deploy command"
+        parameters:
+          deploy_command:
+            type: string
+            default: make deploy
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
-
+          - run: "<< parameters.deploy_command >>"
 jobs:
-  checkout:
-    executor: node/aws-cli
+  development:
+    executor: node/default
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
+
+  test:
+    executor: node/default
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
+
+  production:
+    executor: node/default
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "code/package-lock.json" }}
+            - npm-deps-
+      - node/init
+      - save_cache:
+          key: npm-deps-{{ checksum "code/package-lock.json" }}
+          paths:
+            - code/node_modules
+      - node/build
+      - node/test
+      - node/deploy
 
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - checkout
-      - node/init:
+      - development
+      - test:
           requires:
-            - checkout
-      - node/build:
+            - development
+      - production:
           requires:
-            - node/init
-      - node/test:
-          requires:
-            - node/build
-      - node/deploy:
-          requires:
-            - node/test
+            - test
