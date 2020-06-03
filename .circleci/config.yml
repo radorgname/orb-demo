@@ -34,6 +34,10 @@ orbs:
               key: npm-deps-{{ checksum "<< parameters.cache_key >>" }}
               paths:
                 - << parameters.node_modules_path >>
+          - persist_to_workspace:
+              root: .
+              paths:
+                - .
       build:
         description: "make build command"
         parameters:
@@ -60,6 +64,7 @@ jobs:
     executor: node/default
     steps:
       - node/init
+
   build:
     executor: node/default
     steps:
