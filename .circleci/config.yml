@@ -4,93 +4,81 @@ description: # The purpose of this orb
 orbs:
   node:
     executors:
-      node:
+      default:
         docker:
-          - image: cimg/node:10
+          - image: cimg/node:10.20
       aws-cli:
         docker:
           - image: amazon/aws-cli
-    # commands:
-    #   install:
-    #     steps:
-    #       - run:
-    #           name: Install NVM
-    #           command: curl -o- https://raw.githubusercontent.com/creationix/nvm/v${NVM_VERSION}/install.sh | bash \
-    #       - run:
-    #           name: activate profile
-    #           command: |
-    #             echo 'export NVM_DIR=$HOME/.nvm' >> $BASH_ENV
-    #             echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
-
-    jobs:
-      verify-versions:
-        executor: node
+    commands:
+      init_command:
+        description: "make init command"
+        parameters:
+          init_command:
+            type: string
+            default: make init
+          cache_key:
+            type: string
+            default: "code/package-lock.json"
+          node_modules_path:
+            type: string
+            default: "code/node_modules"
         steps:
-          - run:
-              name: npm version
-              command: npm --version
-          - run:
-              name: node version
-              command: node --version
-      init:
-        executor: node
-        steps:
+          - checkout
           - restore_cache:
               keys:
-                - npm-deps-{{ checksum "code/package-lock.json" }}
+                - npm-deps-{{ checksum "<< parameters.cache_key >>" }}
                 - npm-deps-
-          - run:
-              name: Running make init
-              command: make init
+          - run: "<< parameters.init_command >>"
           - save_cache:
-              key: npm-deps-{{ checksum "code/package-lock.json" }}
+              key: npm-deps-{{ checksum "code/applications/preact-app/package-lock.json" }}
               paths:
-                - code/node_modules
-      test:
-        executor: node
+                - << parameters.node_modules_path >>
+      build_command:
+        description: "make build command"
+        parameters:
+          build_command:
+            type: string
+            default: make build
         steps:
-          - run:
-              name: Running make test
-              command: make test
-      lint:
-        executor: node
+          - run: "<< parameters.build_command >>"
+      deploy_command:
+        description: "make deploy command"
+        parameters:
+          deploy_command:
+            type: string
+            default: make deploy
         steps:
-          - run:
-              name: Running make lint
-              command: make lint
+          - run: "<< parameters.deploy_command >>"
+    jobs:
+      init:
+        executor: default
+        steps:
+          - init_command
+          - persist_to_workspace:
+              root: .
+              paths:
+                - .
       build:
-        executor: node
+        executor: default
         steps:
-          - run:
-              name: Running make build
-              command: make build
+          - attach_workspace:
+              at: .
+          - build_command
+
       deploy:
-        executor: node
+        executor: default
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
-
-jobs:
-  checkout:
-    executor: node/aws-cli
-    steps:
-      - checkout
-
+          - attach_workspace:
+              at: .
+          - deploy_command
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - checkout
-      - node/init:
-          requires:
-            - checkout
+      - node/init
       - node/build:
           requires:
             - node/init
-      - node/test:
-          requires:
-            - node/build
       - node/deploy:
           requires:
-            - node/test
+            - node/build
