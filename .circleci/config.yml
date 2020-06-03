@@ -42,13 +42,15 @@ orbs:
             default: make build
         steps:
           - run: "<< parameters.build_command >>"
-      deploy_command:
+      deploy:
         description: "make deploy command"
         parameters:
           deploy_command:
             type: string
             default: make deploy
         steps:
+          - attach_workspace:
+              at: .
           - run: "<< parameters.deploy_command >>"
     jobs:
       init:
@@ -66,12 +68,26 @@ orbs:
               at: .
           - build_command
 
-      deploy:
-        executor: default
-        steps:
-          - attach_workspace:
-              at: .
-          - deploy_command
+jobs:
+  deploy-development:
+    executor: node/default
+    steps:
+      - node/deploy
+  deploy-test:
+    executor: node/default
+    steps:
+      - node/deploy
+  deploy-production:
+    executor: node/default
+    steps:
+      - node/deploy
+  # deploy-test:
+  #   executor: node/default
+  #   steps:
+  # deploy-prod:
+  #   executor: node/default
+  #   steps:
+
 workflows:
   main:
     jobs:
@@ -79,6 +95,12 @@ workflows:
       - node/build:
           requires:
             - node/init
-      - node/deploy:
+      - deploy-dev:
           requires:
             - node/build
+      - deploy-test:
+          requires:
+            - deploy-development
+      - deploy-production:
+          requires:
+            - deploy-test
