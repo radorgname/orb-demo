@@ -95,7 +95,7 @@ workflows:
       - node/build:
           requires:
             - node/init
-      - deploy-dev:
+      - deploy-development:
           requires:
             - node/build
       - deploy-test:
