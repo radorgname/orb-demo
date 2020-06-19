@@ -11,88 +11,67 @@ orbs:
         docker:
           - image: amazon/aws-cli
     jobs:
-      verify-versions:
-        executor: node
-        steps:
-          - run:
-              name: npm version
-              command: npm --version
-          - run:
-              name: node version
-              command: node --version
       init:
         executor: node
         steps:
+          - checkout
           - restore_cache:
               keys:
-                - npm-deps-{{ checksum "code/package-lock.json" }}
+                - npm-deps-{{ checksum "node_modules" }}
                 - npm-deps-
-          - run:
-              name: Running make init
-              command: make init
+          - run: make init
           - save_cache:
-              key: npm-deps-{{ checksum "code/package-lock.json" }}
+              key: npm-deps-{{ checksum "node_modules" }}
               paths:
-                - code/node_modules
-      test:
-        executor: node
-        steps:
-          - run:
-              name: Running make test
-              command: make test
-      lint:
-        executor: node
-        steps:
-          - run:
-              name: Running make lint
-              command: make lint
+                - node_modules
+          - persist_to_workspace:
+              root: .
+              paths:
+                - .
       build:
         executor: node
         steps:
-          - run:
-              name: Running make build
-              command: make build
+          - attach_workspace:
+              at: .
+          - run: make build
+      test:
+        executor: node
+        steps:
+          - attach_workspace:
+              at: .
+          - run: make test
       deploy-development:
-        executor: node
+        executor: aws-cli
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
+          - attach_workspace:
+              at: .
+          - run: make deploy
       deploy-test:
-        executor: node
+        executor: aws-cli
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
+          - attach_workspace:
+              at: .
+          - run: make deploy
       deploy-production:
-        executor: node
+        executor: aws-cli
         steps:
-          - run:
-              name: Running make deploy
-              command: make deploy
-jobs:
-  checkout:
-    executor: node/aws-cli
-    steps:
-      - checkout
+          - attach_workspace:
+              at: .
+          - run: make deploy
 
 workflows:
   main:
     jobs:
-      - node/verify-versions
-      - checkout
-      - node/init:
+      - node/init
+      - node/test:
           requires:
-            - checkout
+            - node/init
       - node/build:
           requires:
             - node/init
-      - node/test:
-          requires:
-            - node/build
       - node/deploy-development:
           requires:
-            - node/test
+            - node/build
       - node/deploy-test:
           requires:
             - node/deploy-development
