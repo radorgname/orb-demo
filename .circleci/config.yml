@@ -1,80 +1,9 @@
 version: 2.1
-description: # The purpose of this orb
 
 orbs:
-  node:
-    executors:
-      node:
-        docker:
-          - image: cimg/node:10.20
-      aws-cli:
-        docker:
-          - image: amazon/aws-cli
-    jobs:
-      init:
-        executor: node
-        steps:
-          - checkout
-          - restore_cache:
-              keys:
-                - npm-deps-{{ checksum "node_modules" }}
-                - npm-deps-
-          - run: make init
-          - save_cache:
-              key: npm-deps-{{ checksum "node_modules" }}
-              paths:
-                - node_modules
-          - persist_to_workspace:
-              root: .
-              paths:
-                - .
-      build:
-        executor: node
-        steps:
-          - attach_workspace:
-              at: .
-          - run: make build
-      test:
-        executor: node
-        steps:
-          - attach_workspace:
-              at: .
-          - run: make test
-      deploy-development:
-        executor: aws-cli
-        steps:
-          - attach_workspace:
-              at: .
-          - run: make deploy
-      deploy-test:
-        executor: aws-cli
-        steps:
-          - attach_workspace:
-              at: .
-          - run: make deploy
-      deploy-production:
-        executor: aws-cli
-        steps:
-          - attach_workspace:
-              at: .
-          - run: make deploy
+  hello: aws-lambda/node@0.0.1
 
 workflows:
-  main:
+  "Hello Workflow":
     jobs:
-      - node/init
-      - node/test:
-          requires:
-            - node/init
-      - node/build:
-          requires:
-            - node/init
-      - node/deploy-development:
-          requires:
-            - node/build
-      - node/deploy-test:
-          requires:
-            - node/deploy-development
-      - node/deploy-production:
-          requires:
-            - node/deploy-test
+      - hello/hello-build
