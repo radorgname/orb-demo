@@ -1,9 +1,10 @@
 version: 2.1
 
 orbs:
-  hello: aws-lambda/node@0.0.1
+  hello: aws-lambda/node@0.0.2
 
 workflows:
   "Hello Workflow":
     jobs:
-      - hello/hello-build
+      - hello/hello:
+          saywhat: "good bye"
